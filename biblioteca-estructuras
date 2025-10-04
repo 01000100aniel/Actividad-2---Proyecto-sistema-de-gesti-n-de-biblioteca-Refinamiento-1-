@@ -1,0 +1,228 @@
+# Clases básicas para libro, usuario y préstamo
+class Libro:
+    def __init__(self, id_libro, titulo, autor, año, estado="disponible"):
+        self.id = id_libro
+        self.titulo = titulo
+        self.autor = autor
+        self.año = año
+        self.estado = estado
+
+    def __str__(self):
+        return f"[{self.id}] {self.titulo} - {self.autor} ({self.año}) - {self.estado}"
+
+class Usuario:
+    def __init__(self, id_usuario, nombre, contacto):
+        self.id = id_usuario
+        self.nombre = nombre
+        self.contacto = contacto
+        self.libros_prestados = []
+
+    def __str__(self):
+        return f"[{self.id}] {self.nombre} - {self.contacto} - Libros prestados: {len(self.libros_prestados)}"
+
+class Prestamo:
+    def __init__(self, id_prestamo, usuario, libro):
+        self.id = id_prestamo
+        self.usuario = usuario
+        self.libro = libro
+
+    def __str__(self):
+        return f"Préstamo ID: {self.id} - Usuario: {self.usuario.nombre} - Libro: {self.libro.titulo}"
+
+# Nodo para lista enlazada
+class Nodo:
+    def __init__(self, dato):
+        self.dato = dato
+        self.siguiente = None
+
+# Lista enlazada para libros y usuarios
+class ListaEnlazada:
+    def __init__(self):
+        self.cabeza = None
+
+    def agregar(self, dato):
+        nuevo = Nodo(dato)
+        if not self.cabeza:
+            self.cabeza = nuevo
+        else:
+            actual = self.cabeza
+            while actual.siguiente:
+                actual = actual.siguiente
+            actual.siguiente = nuevo
+
+    def buscar(self, id_buscar):
+        actual = self.cabeza
+        while actual:
+            if actual.dato.id == id_buscar:
+                return actual.dato
+            actual = actual.siguiente
+        return None
+
+    def eliminar(self, id_eliminar):
+        actual = self.cabeza
+        anterior = None
+        while actual:
+            if actual.dato.id == id_eliminar:
+                if anterior:
+                    anterior.siguiente = actual.siguiente
+                else:
+                    self.cabeza = actual.siguiente
+                return True
+            anterior = actual
+            actual = actual.siguiente
+        return False
+
+    def mostrar_todos(self):
+        actual = self.cabeza
+        while actual:
+            print(actual.dato)
+            actual = actual.siguiente
+
+# Cola para préstamos
+class Cola:
+    def __init__(self):
+        self.items = []
+
+    def encolar(self, item):
+        self.items.append(item)
+
+    def desencolar(self):
+        if self.items:
+            return self.items.pop(0)
+        return None
+
+    def esta_vacia(self):
+        return len(self.items) == 0
+
+    def mostrar(self):
+        if self.esta_vacia():
+            print("No hay préstamos en cola.")
+        else:
+            for prestamo in self.items:
+                print(prestamo)
+
+# Sistema de gestión biblioteca
+class SistemaBiblioteca:
+    def __init__(self):
+        self.libros = ListaEnlazada()
+        self.usuarios = ListaEnlazada()
+        self.prestamos = Cola()
+        self.contador_prestamos = 1
+
+    # Registro
+    def registrar_libro(self):
+        id_libro = input("ID libro: ")
+        if self.libros.buscar(id_libro):
+            print("Este libro ya está registrado.")
+            return
+        titulo = input("Título: ")
+        autor = input("Autor: ")
+        año = input("Año: ")
+        libro = Libro(id_libro, titulo, autor, año)
+        self.libros.agregar(libro)
+        print("Libro registrado con éxito.")
+
+    def registrar_usuario(self):
+        id_usuario = input("ID usuario: ")
+        if self.usuarios.buscar(id_usuario):
+            print("Este usuario ya está registrado.")
+            return
+        nombre = input("Nombre: ")
+        contacto = input("Contacto: ")
+        usuario = Usuario(id_usuario, nombre, contacto)
+        self.usuarios.agregar(usuario)
+        print("Usuario registrado con éxito.")
+
+    # Préstamo
+    def prestar_libro(self):
+        id_usuario = input("ID usuario: ")
+        usuario = self.usuarios.buscar(id_usuario)
+        if not usuario:
+            print("Usuario no encontrado.")
+            return
+        id_libro = input("ID libro: ")
+        libro = self.libros.buscar(id_libro)
+        if not libro:
+            print("Libro no encontrado.")
+            return
+        if libro.estado != "disponible":
+            print("Libro no está disponible para préstamo.")
+            return
+        # Cambiar estado libro y agregar préstamo
+        libro.estado = "prestado"
+        usuario.libros_prestados.append(libro)
+        prestamo = Prestamo(self.contador_prestamos, usuario, libro)
+        self.prestamos.encolar(prestamo)
+        self.contador_prestamos += 1
+        print(f"Préstamo realizado con éxito: {prestamo}")
+
+    # Devolución
+    def devolver_libro(self):
+        id_usuario = input("ID usuario: ")
+        usuario = self.usuarios.buscar(id_usuario)
+        if not usuario:
+            print("Usuario no encontrado.")
+            return
+        id_libro = input("ID libro: ")
+        libro = self.libros.buscar(id_libro)
+        if not libro:
+            print("Libro no encontrado.")
+            return
+        if libro not in usuario.libros_prestados:
+            print("Este libro no está prestado a este usuario.")
+            return
+        # Cambiar estado libro y actualizar lista usuario
+        libro.estado = "disponible"
+        usuario.libros_prestados.remove(libro)
+        print(f"Libro '{libro.titulo}' devuelto con éxito.")
+
+    # Mostrar info
+    def mostrar_libros(self):
+        print("\nLista de libros:")
+        self.libros.mostrar_todos()
+
+    def mostrar_usuarios(self):
+        print("\nLista de usuarios:")
+        self.usuarios.mostrar_todos()
+
+    def mostrar_prestamos(self):
+        print("\nPréstamos pendientes:")
+        self.prestamos.mostrar()
+
+# Menú de interacción
+def menu():
+    sistema = SistemaBiblioteca()
+    while True:
+        print("\n--- Sistema de Gestión de Biblioteca ---")
+        print("1. Registrar libro")
+        print("2. Registrar usuario")
+        print("3. Prestar libro")
+        print("4. Devolver libro")
+        print("5. Mostrar libros")
+        print("6. Mostrar usuarios")
+        print("7. Mostrar préstamos")
+        print("0. Salir")
+        opcion = input("Seleccione una opción: ")
+
+        if opcion == "1":
+            sistema.registrar_libro()
+        elif opcion == "2":
+            sistema.registrar_usuario()
+        elif opcion == "3":
+            sistema.prestar_libro()
+        elif opcion == "4":
+            sistema.devolver_libro()
+        elif opcion == "5":
+            sistema.mostrar_libros()
+        elif opcion == "6":
+            sistema.mostrar_usuarios()
+        elif opcion == "7":
+            sistema.mostrar_prestamos()
+        elif opcion == "0":
+            print("¡Hasta luego! Gracias por usar el sistema.")
+            break
+        else:
+            print("Opción no válida, intenta de nuevo.")
+
+if __name__ == "__main__":
+    menu()
