@@ -1,4 +1,4 @@
-# Clases básicas para libro, usuario y préstamo
+# Clases básicas para libro, usuario y préstamo por: Daniel Steven Alvarez Chiguasuque.
 class Libro:
     def __init__(self, id_libro, titulo, autor, año, estado="disponible"):
         self.id = id_libro
